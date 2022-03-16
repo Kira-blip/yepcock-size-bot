@@ -16,6 +16,8 @@ from telegram import InlineKeyboardButton, Update, InlineQueryResultArticle, Inp
     InlineKeyboardMarkup
 from telegram.ext import CallbackContext, Updater, CommandHandler, InlineQueryHandler
 from tinydb import TinyDB, Query
+import subprocess
+from sys import platform
 
 # Enable logging
 logging.basicConfig(
@@ -25,6 +27,17 @@ logger = logging.getLogger(__name__)
 
 load_dotenv()
 
+# TG_BOT_TOKEN
+TOKEN = os.getenv("TG_BOT_TOKEN")
+
+def get_raspberry_info():
+    if platform == "linux":
+        rasp_model = subprocess.run(['cat', '/sys/firmware/devicetree/base/model'], capture_output=True, text=True).stdout.strip("\n")
+        temp = subprocess.run(['vcgencmd', 'measure_temp'], capture_output=True, text=True).stdout.strip("\n")
+        return 'Запущено на: ' + rasp_model + ' ' + temp
+    else:
+        return ''
+
 error_template = 'Попробуйте позднее'
 update_template = 'Обновление в 00:00 MSK'
 update_template_rnd = 'Обновление в 00:00 MSK, CAKE chat only'
@@ -32,7 +45,8 @@ update_cbr_template = 'Обновление каждый час'
 info_text = 'Здарова, телеговские :)\n' \
             'Пожелания: @olegsvs (aka SentryWard)\n' \
             'Source code(писался на скорую руку): https://github.com/olegsvs/yepcock-size-bot\n' \
-            'Для чата https://t.me/cakestreampage\n'  # \
+            'Для чата https://t.me/cakestreampage\n' \
+            '' + get_raspberry_info()  # \
             # '/anekdot1@yepcock_size_bot - Cлучайный анекдот от anekdotme.ru\n' \
             # '/anekdot2@yepcock_size_bot - Случайный анекдот с rzhunemogu.ru\n' \
             # '/bashim@yepcock_size_bot - Случайная цитата с bashorg.org\n'
@@ -42,10 +56,6 @@ db = TinyDB('users/db.json')
 dbCBR = TinyDB('users/dbCBR.json')
 dbRANDOM = TinyDB('users/dbRANDOM.json')
 UserQuery: Query = Query()
-
-# TG_BOT_TOKEN
-TOKEN = os.getenv("TG_BOT_TOKEN")
-
 
 def start(update: Update, _: CallbackContext):
     key_board = [
