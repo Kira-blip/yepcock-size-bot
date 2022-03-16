@@ -278,6 +278,10 @@ def info(update: Update, _: CallbackContext):
     update.message.reply_text(info_text, disable_web_page_preview=True)
 
 
+def ping(update: Update, _: CallbackContext):
+    update.message.reply_text('pong', disable_web_page_preview=True)
+
+
 def anekdot1(update: Update, _: CallbackContext):
     update.message.reply_text(get_anekdot())
 
@@ -377,6 +381,7 @@ def main():
     # dispatcher.add_handler(echo_handler)
     dispatcher.add_handler(CommandHandler("start", start, run_async=True))
     dispatcher.add_handler(CommandHandler("info", info, run_async=True))
+    dispatcher.add_handler(CommandHandler("ping", ping, run_async=True))
     # dispatcher.add_handler(CommandHandler("anekdot1", anekdot1, run_async=True))
     # dispatcher.add_handler(CommandHandler("anekdot2", anekdot2, run_async=True))
     # dispatcher.add_handler(CommandHandler("bashim", bashim, run_async=True))
