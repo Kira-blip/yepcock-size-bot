@@ -34,7 +34,7 @@ def get_raspberry_info():
     if platform == "linux":
         rasp_model = subprocess.run(['cat', '/sys/firmware/devicetree/base/model'], capture_output=True, text=True).stdout.strip("\n")
         temp = subprocess.run(['vcgencmd', 'measure_temp'], capture_output=True, text=True).stdout.strip("\n")
-        return 'Запущено на: ' + rasp_model + ' ' + temp
+        return 'Запущено на: ' + rasp_model + ', ' + temp
     else:
         return ''
 
