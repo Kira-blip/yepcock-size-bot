@@ -129,6 +129,7 @@ def random_beautiful():
 
 def on_result_chosen(update: Update, _: CallbackContext):
     logger.info(update)
+    logger.info('\n')
 
 
 def get_inline_id(prefix: str):
@@ -192,11 +193,11 @@ def inlinequery(update: Update, _: CallbackContext):
     try:
         update.inline_query.answer(results, cache_time=0)
         logger.info(update)
-        logger.info('\n\n')
+        logger.info('\n')
     except Exception as e:
         logger.error('Failed to update.inline_query.answer: ' + str(e))
         logger.info(update)
-        logger.info('\n\n')
+        logger.info('\n')
 
 
 def get_exchange_rates():
