@@ -14,7 +14,7 @@ from dotenv import load_dotenv
 from pyquery import PyQuery as PyQ
 from telegram import InlineKeyboardButton, Update, InlineQueryResultArticle, InputTextMessageContent, ParseMode, \
     InlineKeyboardMarkup
-from telegram.ext import CallbackContext, Updater, CommandHandler, InlineQueryHandler
+from telegram.ext import CallbackContext, Updater, CommandHandler, InlineQueryHandler, ChosenInlineResultHandler
 from tinydb import TinyDB, Query
 import subprocess
 from sys import platform
@@ -127,10 +127,18 @@ def random_beautiful():
     return text
 
 
+def on_result_chosen(update: Update, _: CallbackContext):
+    logger.info(update)
+
+
+def get_inline_id(prefix: str):
+    return prefix + '_' + str(uuid4())
+
+
 def inlinequery(update: Update, _: CallbackContext):
     results = [
         InlineQueryResultArticle(
-            id=str(uuid4()),
+            id=get_inline_id('sizer_cock'),
             title="Размер члена...",
             description=update_template,
             thumb_url='https://i.imgur.com/wnV4Le9.png',
@@ -139,7 +147,7 @@ def inlinequery(update: Update, _: CallbackContext):
             reply_markup=InlineKeyboardMarkup(key_get_my_cock_result)
         ),
         InlineQueryResultArticle(
-            id=str(uuid4()),
+            id=get_inline_id('homo_sexual'),
             title="Я гомосексуал на...",
             description=update_template,
             thumb_url='https://i.imgur.com/1yqokVW.png',
@@ -148,7 +156,7 @@ def inlinequery(update: Update, _: CallbackContext):
             reply_markup=InlineKeyboardMarkup(key_get_my_gay_result)
         ),
         InlineQueryResultArticle(
-            id=str(uuid4()),
+            id=get_inline_id('random_gay'),
             title="Гей дня это...",
             description=update_template_rnd,
             thumb_url='https://i.imgur.com/0OCN8kR.png',
@@ -156,7 +164,7 @@ def inlinequery(update: Update, _: CallbackContext):
                                                           parse_mode=ParseMode.HTML)
         ),
         InlineQueryResultArticle(
-            id=str(uuid4()),
+            id=get_inline_id('random_beautiful'),
             title="Красавчик дня это...",
             description=update_template_rnd,
             thumb_url='https://i.imgur.com/YoLgEiP.png',
@@ -164,7 +172,7 @@ def inlinequery(update: Update, _: CallbackContext):
                                                           parse_mode=ParseMode.HTML)
         ),
         InlineQueryResultArticle(
-            id=str(uuid4()),
+            id=get_inline_id('get_exchange_rates'),
             title="Курс ЦБ-РФ $/€ к ₽",
             description=update_cbr_template,
             thumb_url='https://image.flaticon.com/icons/png/512/893/893078.png',
@@ -172,7 +180,7 @@ def inlinequery(update: Update, _: CallbackContext):
                                                           parse_mode=ParseMode.HTML),
         ),
         InlineQueryResultArticle(
-            id=str(uuid4()),
+            id=get_inline_id('info_text'),
             title="О боте",
             description='Описание',
             thumb_url='https://i.imgur.com/gRBXXvn.png',
@@ -180,9 +188,15 @@ def inlinequery(update: Update, _: CallbackContext):
                                                           parse_mode=ParseMode.HTML, disable_web_page_preview=True),
         ),
     ]
-    logger.info(update)
-    logger.info('\n\n')
-    update.inline_query.answer(results, cache_time=0)
+
+    try:
+        update.inline_query.answer(results, cache_time=0)
+        logger.info(update)
+        logger.info('\n\n')
+    except Exception as e:
+        logger.error('Failed to update.inline_query.answer: ' + str(e))
+        logger.info(update)
+        logger.info('\n\n')
 
 
 def get_exchange_rates():
@@ -367,6 +381,7 @@ def main():
     # dispatcher.add_handler(CommandHandler("anekdot2", anekdot2, run_async=True))
     # dispatcher.add_handler(CommandHandler("bashim", bashim, run_async=True))
     dispatcher.add_handler(InlineQueryHandler(inlinequery, run_async=True))
+    dispatcher.add_handler(ChosenInlineResultHandler(on_result_chosen, run_async=True))
     updater.start_polling()
     updater.idle()
 
