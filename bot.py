@@ -170,7 +170,7 @@ def iq_test(userId):
     if iq <= 4:
         hint = 'как у пыли'
 
-    text = 'Мой IQ: <b>%s' % iq + '</b> из 170 баллов, ' + hint + ' ' + emoji
+    text = 'Мой IQ: <b>%s' % iq + '</b> из 160 баллов, ' + hint + ' ' + emoji
     return text
 
 
