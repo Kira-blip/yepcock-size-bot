@@ -1,1 +1,8 @@
 python-telegram-bot
+tinydb
+requests
+bs4
+pyquery
+beautifulsoup4
+python-dotenv
+telethon
