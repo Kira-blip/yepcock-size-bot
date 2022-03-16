@@ -51,6 +51,9 @@ info_text = 'Здарова, телеговские :)\n' \
             # '/anekdot2@yepcock_size_bot - Случайный анекдот с rzhunemogu.ru\n' \
             # '/bashim@yepcock_size_bot - Случайная цитата с bashorg.org\n'
 
+sad_emoji = ['😒', '☹️', '😣', '🥺', '😞', '🙄', '😟', '😠', '😕', '😖', '😫', '😩', '😰', '😭']
+happy_emoji = ['😀', '😏', '😱', '😂', '😁', '😂', '😉', '😊', '😋', '😎', '☺', '😏']
+
 # Init db
 db = TinyDB('users/db.json')
 dbCBR = TinyDB('users/dbCBR.json')
@@ -93,9 +96,9 @@ def get_anekdot2():
 def sizer_cock(userId):
     size = sync_with_db(userId, "sizer_cock", randrange(30))
     if size >= 15:
-        emoji = random.choice(['😏', '😱', '😂', '😁'])
+        emoji = random.choice(happy_emoji)
     else:
-        emoji = random.choice(['😒', '☹️', '😣', '🥺'])
+        emoji = random.choice(sad_emoji)
     text = 'Мой кок размером: <b>%s' % size + 'см</b> ' + emoji
     return text
 
@@ -106,8 +109,77 @@ def homo_sexual(userId):
     return text
 
 
+def iq_test(userId):
+    iq = sync_with_db(userId, "iq_test", randrange(161))
+    if iq >= 100:
+        emoji = random.choice(happy_emoji)
+    else:
+        emoji = random.choice(sad_emoji)
+    if iq > 140:
+        hint = 'такой показатель всего у 0,2% человечества'
+    if iq <= 140:
+        hint = 'такой показатель всего у 2,5% человечества'
+    if iq <= 130:
+        hint = 'очень высокий'
+    if iq <= 120:
+        hint = 'высокий'
+    if iq <= 110:
+        hint = 'выше среднего'
+    if iq <= 100:
+        hint = 'средний'
+    if iq <= 90:
+        hint = 'ниже среднего'
+    if iq <= 80:
+        hint = 'как у приматов'
+    if iq <= 76:
+        hint = 'как у китов'
+    if iq <= 72:
+        hint = 'как у слонов'
+    if iq <= 68:
+        hint = 'как у собак'
+    if iq <= 64:
+        hint = 'как у кошек'
+    if iq <= 60:
+        hint = 'как у крысок'
+    if iq <= 56:
+        hint = 'как у свинок'
+    if iq <= 52:
+        hint = 'как у белок'
+    if iq <= 48:
+        hint = 'как у соек'
+    if iq <= 44:
+        hint = 'как у ворон'
+    if iq <= 40:
+        hint = 'как у енотов'
+    if iq <= 36:
+        hint = 'как у морских котиков'
+    if iq <= 32:
+        hint = 'как у попугаев'
+    if iq <= 28:
+        hint = 'как у лошадей'
+    if iq <= 24:
+        hint = 'как у голубей'
+    if iq <= 20:
+        hint = 'как у овец'
+    if iq <= 16:
+        hint = 'как у крокодилов'
+    if iq <= 12:
+        hint = 'как у пчёл'
+    if iq <= 8:
+        hint = 'как у черепах'
+    if iq <= 4:
+        hint = 'как у пыли'
+
+    text = 'Мой IQ: <b>%s' % iq + '</b> из 170 баллов, ' + hint + ' ' + emoji
+    return text
+
+
 key_get_my_cock_result = [
     [InlineKeyboardButton('Узнать свой размер 👉👈', switch_inline_query_current_chat='')],
+]
+
+key_get_my_IQ_result = [
+    [InlineKeyboardButton('Проверь свой интеллект 🧠', switch_inline_query_current_chat='')],
 ]
 
 key_get_my_gay_result = [
@@ -156,6 +228,15 @@ def inlinequery(update: Update, _: CallbackContext):
             input_message_content=InputTextMessageContent(homo_sexual(update.effective_user.id),
                                                           parse_mode=ParseMode.HTML),
             reply_markup=InlineKeyboardMarkup(key_get_my_gay_result)
+        ),
+        InlineQueryResultArticle(
+            id=get_inline_id('iq_test'),
+            title="Мой IQ...",
+            description=update_template,
+            thumb_url='https://i.imgur.com/95qsO7Y.png',
+            input_message_content=InputTextMessageContent(iq_test(update.effective_user.id),
+                                                          parse_mode=ParseMode.HTML),
+            reply_markup=InlineKeyboardMarkup(key_get_my_IQ_result)
         ),
         InlineQueryResultArticle(
             id=get_inline_id('random_gay'),
