@@ -1,20 +1,21 @@
+import calendar
 import json
 import logging
+import os
+import random
+import time
 from datetime import datetime
 from random import randrange
-import random
 from uuid import uuid4
-from telegram import InlineQueryResultArticle, ParseMode, InputTextMessageContent, Update
-from telegram.ext import Updater, InlineQueryHandler, CommandHandler, CallbackContext
-from telegram import InlineKeyboardButton, InlineKeyboardMarkup
-from tinydb import TinyDB, Query
-import requests, bs4
-from pyquery import PyQuery as pq
-import calendar
-import time
-import os
-from dotenv import load_dotenv
+import bs4
 import pandas as pd
+import requests
+from dotenv import load_dotenv
+from pyquery import PyQuery as PyQ
+from telegram import InlineKeyboardButton, Update, InlineQueryResultArticle, InputTextMessageContent, ParseMode, \
+    InlineKeyboardMarkup
+from telegram.ext import CallbackContext, Updater, CommandHandler, InlineQueryHandler
+from tinydb import TinyDB, Query
 
 # Enable logging
 logging.basicConfig(
@@ -35,7 +36,7 @@ info_text = 'Здарова, телеговские :)\n' \
             # '/anekdot1@yepcock_size_bot - Cлучайный анекдот от anekdotme.ru\n' \
             # '/anekdot2@yepcock_size_bot - Случайный анекдот с rzhunemogu.ru\n' \
             # '/bashim@yepcock_size_bot - Случайная цитата с bashorg.org\n'
-            
+
 # Init db
 db = TinyDB('users/db.json')
 dbCBR = TinyDB('users/dbCBR.json')
@@ -46,12 +47,13 @@ UserQuery: Query = Query()
 TOKEN = os.getenv("TG_BOT_TOKEN")
 
 
-def start(update: Update, context: CallbackContext):
+def start(update: Update, _: CallbackContext):
     key_board = [
         [InlineKeyboardButton('НАЧАТЬ', switch_inline_query_current_chat='')],
     ]
 
     update.message.reply_text(info_text, reply_markup=InlineKeyboardMarkup(key_board))
+
 
 def get_anekdot():
     try:
@@ -80,12 +82,11 @@ def get_anekdot2():
 
 def sizer_cock(userId):
     size = sync_with_db(userId, "sizer_cock", randrange(30))
-    type = 'см'
     if size >= 15:
         emoji = random.choice(['😏', '😱', '😂', '😁'])
-    if size <= 14:
+    else:
         emoji = random.choice(['😒', '☹️', '😣', '🥺'])
-    text = 'Мой кок размером: <b>%s' % size + type + '</b> ' + emoji
+    text = 'Мой кок размером: <b>%s' % size + 'см</b> ' + emoji
     return text
 
 
@@ -169,8 +170,6 @@ def inlinequery(update: Update, _: CallbackContext):
                                                           parse_mode=ParseMode.HTML, disable_web_page_preview=True),
         ),
     ]
-    if update.effective_chat:
-        logger.info(update.effective_chat.id)
     logger.info(update)
     logger.info('\n\n')
     update.inline_query.answer(results, cache_time=0)
@@ -182,13 +181,13 @@ def get_exchange_rates():
         old_data_eur = dbCBR.search(Query().cbrEUR.exists())
         last_timestamp = dbCBR.search(Query().cbrTS.exists())
         now_ts = calendar.timegm(time.gmtime())
-        logger.info('now_ts:'f"{now_ts=}")
+        logger.info('get_exchange: now_ts:'f"{now_ts=}")
 
         if not last_timestamp:
             need_force_update = True
         else:
             diff = now_ts - last_timestamp[0]['cbrTS']
-            logger.info('diff:'f"{diff=}")
+            logger.info('get_exchange: diff:'f"{diff=}")
             if diff >= 3600:
                 need_force_update = True
             else:
@@ -199,7 +198,7 @@ def get_exchange_rates():
             old_data_usd = None
 
         if not old_data_usd:
-            logger.info('old_data_usd not found, update from cbr-xml-daily...')
+            logger.info('get_exchange: old_data_usd not found, update from cbr-xml-daily...')
             upd_ts = get_formatted_date(now_ts)
             data = requests.get('https://www.cbr-xml-daily.ru/daily_json.js').json()
             USD = data['Valute']['USD']['Value']
@@ -208,21 +207,22 @@ def get_exchange_rates():
             dbCBR.insert({'cbrUSD': USD})
             dbCBR.insert({'cbrEUR': EUR})
             dbCBR.insert({'cbrTS': now_ts})
-            text = "Обновлено %s MSK" % upd_ts + "\n" \
-                                                 "USD: <b>%s</b>" % USD + " ₽\n" \
-                                                                          "EUR: <b>%s</b>" % EUR + " ₽"
-            return text
+            return get_exchange_text(upd_ts, USD, EUR)
         else:
-            logger.info('old_data_usd found')
+            logger.info('get_exchange: old_data_usd found')
             upd_ts = get_formatted_date(last_timestamp[0]['cbrTS'])
-            text = "Обновлено %s MSK" % upd_ts + "\n" \
-                                                 "USD: <b>%s</b>" % old_data_usd[0]['cbrUSD'] + " ₽\n" \
-                                                                                                "EUR: <b>%s</b>" % \
-                   old_data_eur[0]['cbrEUR'] + " ₽"
-            return text
+            return get_exchange_text(upd_ts, old_data_usd[0]['cbrUSD'], old_data_eur[0]['cbrEUR'])
     except Exception as e:
         logger.error('Failed to get_exchange_rates: ' + str(e))
         return error_template
+
+
+def get_exchange_text(upd_ts, usd, eur):
+    text = "Обновлено %s MSK" % upd_ts + "\n" \
+                                         "USD: <b>%s</b>" % usd + " ₽\n" \
+                                                                  "EUR: <b>%s</b>" % eur + " ₽\n" \
+                                                                                           "Инфо от ЦБ-РФ"
+    return text
 
 
 def get_formatted_date(timestamp):
@@ -230,51 +230,49 @@ def get_formatted_date(timestamp):
     return date_time.strftime("%d.%m.%Y, %H:%M:%S")
 
 
+# noinspection PyTypeChecker
 def sync_with_db(userId, varType, varValue):
     user = db.search(UserQuery.id == userId)
-    logger.info('userInDb:'f"{user=}")
-    logger.info('userId:'f"{userId=}")
-    logger.info('varType:'f"{varType=}")
-    logger.info('varValue:'f"{varValue=}")
+    logger.info('sync_with_db:'f" {user=} "f" {userId=} "f" {varType=} "f" {varValue=} ")
     if not user:
-        logger.info('user not found')
+        logger.info('sync_with_db: user not found')
         db.insert({'id': userId, varType: varValue})
         return varValue
     else:
         userByVarType = db.search((UserQuery.id == userId) & (UserQuery[varType].exists()))
-        logger.info('userByVarType:'f"{userByVarType=}")
+        logger.info('sync_with_db: userByVarType:'f"{userByVarType=}")
         if not userByVarType:
-            logger.info('userByVarType none, update value...')
+            logger.info('sync_with_db: userByVarType none, update value...')
             db.update({'id': userId, varType: varValue}, UserQuery.id == userId)
             return varValue
         else:
-            logger.info('userByVarType exists, get value...')
+            logger.info('sync_with_db: userByVarType exists, get value...')
             return user[0][varType]
 
 
-def info(update: Update, context: CallbackContext):
+def info(update: Update, _: CallbackContext):
     update.message.reply_text(info_text, disable_web_page_preview=True)
 
 
-def anekdot1(update: Update, context: CallbackContext):
+def anekdot1(update: Update, _: CallbackContext):
     update.message.reply_text(get_anekdot())
 
 
-def anekdot2(update: Update, context: CallbackContext):
+def anekdot2(update: Update, _: CallbackContext):
     update.message.reply_text(get_anekdot2())
 
 
-def bashim(update: Update, context: CallbackContext):
+def bashim(update: Update, _: CallbackContext):
     update.message.reply_text(get_bash_quote())
 
 
 def get_bash_quote():
     try:
         resp = requests.get('http://bashorg.org/random')
-        page = pq(resp.content)
+        page = PyQ(resp.content)
         text = page('.quote:first').text()
-        id = page('.vote:first').text()
-        return id + "\r\n\r\n" + text
+        quote_id = page('.vote:first').text()
+        return quote_id + "\r\n\r\n" + text
     except Exception as e:
         logger.error('Failed to get_bash_quote: ' + str(e))
         return error_template
@@ -282,74 +280,67 @@ def get_bash_quote():
 
 def get_random_gay_user_from_csv():
     try:
-        logger.info('Getting gay user...')
         old_user_id = dbRANDOM.search(Query().gay_id.exists())
         old_user_name = dbRANDOM.search(Query().gay_name.exists())
 
         if not old_user_id:
-            logger.info('old_user_id not found, get random...')
+            logger.info('get_random_gay: old_user_id not found, get random...')
             df = pd.read_csv('members.csv', delimiter=",", lineterminator="\n")
             random_user = df.sample()
             user_id = random_user.get('user id').to_numpy()
             user_name1 = random_user.get('username').to_numpy()
             user_name2 = random_user.get('name').to_numpy()
-            logger.info('UserName:'f"{user_name1[0]=}"f"{user_name2=}")
-            if isNaN(user_name1):
+            logger.info('get_random_gay: UserName:'f"{user_name1[0]=}"f"{user_name2=}")
+            if is_nan(user_name1):
                 user_name = user_name2[0]
             else:
                 user_name = user_name1[0]
-            logger.info('Random user:'f"{user_id[0]=}"f"{user_name=}")
+            logger.info('get_random_gay: Random user:'f"{user_id[0]=}"f"{user_name=}")
             dbRANDOM.insert({'gay_id': int(user_id[0])})
             dbRANDOM.insert({'gay_name': str(user_name)})
-            text = '<a href="tg://user?id=%s' % user_id[0] + '">@%s' % user_name + '</a>'
-            print(text)
-            return text
+            return get_user_link_text(user_id[0], user_name)
         else:
-            logger.info('old_user_id found')
-            text = '<a href="tg://user?id=%s' % old_user_id[0]['gay_id'] + '">@%s' % old_user_name[0][
-                'gay_name'] + '</a>'
-            print(text)
-            return text
-            # return '<a href="tg://user?id=%s' % 220117151 + '"><b>%s' % 'Oleg Sinelnikov' + '</b></a>'
+            logger.info('get_random_gay: old_user_id found')
+            return get_user_link_text(old_user_id[0]['gay_id'], old_user_name[0]['gay_name'])
     except Exception as e:
         logger.error('Failed to get_random_gay_user_from_csv: ' + str(e))
         return error_template
 
 
-def isNaN(num):
+def get_user_link_text(user_id, user_name):
+    text = '<a href="tg://user?id=%s' % user_id + '">@%s' % user_name + '</a>'
+    logger.info('get_user_link_text: 'f"{text=}")
+    return text
+
+
+def is_nan(num):
     return num != num
 
 
 def get_random_beautiful_user_from_csv():
     try:
-        logger.info('Getting beautiful user...')
         old_user_id = dbRANDOM.search(Query().beautiful_id.exists())
         old_user_name = dbRANDOM.search(Query().beautiful_name.exists())
 
         if not old_user_id:
-            logger.info('old_user_id not found, get random...')
+            logger.info('get_random_beautiful: old_user_id not found, get random...')
             df = pd.read_csv('members.csv', delimiter=",", lineterminator="\n")
             random_user = df.sample()
             user_id = random_user.get('user id').to_numpy()
             user_name1 = random_user.get('username').to_numpy()
             user_name2 = random_user.get('name').to_numpy()
-            logger.info('UserName:'f"{user_name1[0]=}"f"{user_name2=}")
-            if isNaN(user_name1):
+            logger.info('get_random_beautiful: UserName:'f"{user_name1[0]=}"f"{user_name2=}")
+            if is_nan(user_name1):
                 user_name = user_name2[0]
             else:
                 user_name = user_name1[0]
-            logger.info('Random user:'f"{user_id[0]=}"f"{user_name=}")
+            logger.info('get_random_beautiful: Random user:'f"{user_id[0]=}"f"{user_name=}")
             dbRANDOM.insert({'beautiful_id': int(user_id[0])})
             dbRANDOM.insert({'beautiful_name': str(user_name)})
-            text = '<a href="tg://user?id=%s' % user_id[0] + '">@%s' % user_name + '</a>'
-            print(text)
-            return text
+            return get_user_link_text(user_id[0], user_name)
         else:
-            logger.info('old_user_id found')
-            text = '<a href="tg://user?id=%s' % old_user_id[0]['beautiful_id'] + '">@%s' % old_user_name[0][
-                'beautiful_name'] + '</a>'
-            print(text)
-            return text
+            logger.info('get_random_beautiful: old_user_id found')
+            return get_user_link_text(old_user_id[0]['beautiful_id'], old_user_name[0]['beautiful_name'])
     except Exception as e:
         logger.error('Failed to get_random_beautiful_user_from_csv: ' + str(e))
         return error_template

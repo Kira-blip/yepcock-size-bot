@@ -6,3 +6,4 @@ pyquery
 beautifulsoup4
 python-dotenv
 telethon
+pandas
