@@ -361,6 +361,7 @@ def info(update: Update, _: CallbackContext):
 
 
 def ping(update: Update, _: CallbackContext):
+    logger.info("ping request")
     update.message.reply_text('pong', disable_web_page_preview=True)
 
 
