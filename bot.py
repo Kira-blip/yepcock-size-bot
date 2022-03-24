@@ -251,7 +251,7 @@ def inlinequery(update: Update, _: CallbackContext):
         InlineQueryResultArticle(
             id=get_inline_id('random_fact'),
             title="Случайный факт...",
-            description=update_template,
+            description="Узнать случайный факт",
             thumb_url='https://i.imgur.com/gpiM7LN.png',
             input_message_content=InputTextMessageContent(random_fact(),
                                                           parse_mode=ParseMode.HTML),
