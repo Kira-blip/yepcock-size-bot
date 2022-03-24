@@ -21,7 +21,7 @@ from sys import platform
 
 # Enable logging
 logging.basicConfig(
-    filename=datetime.now().strftime('logs/log_%H_%M_%d_%m_%Y.log'),
+    filename=datetime.now().strftime('logs/log_%d_%m_%Y_%H_%M.log'),
     format='%(asctime)s - %(name)s - %(levelname)s - %(message)s', level=logging.INFO, datefmt='%Y-%m-%d %H:%M:%S'
 )
 logger = logging.getLogger(__name__)
