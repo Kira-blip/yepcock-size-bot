@@ -31,13 +31,16 @@ load_dotenv()
 # TG_BOT_TOKEN
 TOKEN = os.getenv("TG_BOT_TOKEN")
 
+
 def get_raspberry_info():
     if platform == "linux":
-        rasp_model = subprocess.run(['cat', '/sys/firmware/devicetree/base/model'], capture_output=True, text=True).stdout.strip("\n")
+        rasp_model = subprocess.run(['cat', '/sys/firmware/devicetree/base/model'], capture_output=True,
+                                    text=True).stdout.strip("\n")
         temp = subprocess.run(['vcgencmd', 'measure_temp'], capture_output=True, text=True).stdout.strip("\n")
         return 'Запущено на: ' + rasp_model + ', ' + temp
     else:
         return ''
+
 
 error_template = 'Попробуйте позднее'
 update_template = 'Обновление в 00:00 MSK'
@@ -60,6 +63,7 @@ db = TinyDB('users/db.json')
 dbCBR = TinyDB('users/dbCBR.json')
 dbRANDOM = TinyDB('users/dbRANDOM.json')
 UserQuery: Query = Query()
+
 
 def start(update: Update, _: CallbackContext):
     key_board = [
@@ -187,6 +191,10 @@ key_get_my_gay_result = [
     [InlineKeyboardButton('Узнать свои шансы 🏳️‍🌈', switch_inline_query_current_chat='')],
 ]
 
+key_random_fact = [
+    [InlineKeyboardButton('Узнать ещё 🤔', switch_inline_query_current_chat='')],
+]
+
 
 def random_gay():
     user_text = get_random_gay_user_from_csv()
@@ -240,6 +248,15 @@ def inlinequery(update: Update, _: CallbackContext):
             reply_markup=InlineKeyboardMarkup(key_get_my_IQ_result)
         ),
         InlineQueryResultArticle(
+            id=get_inline_id('random_fact'),
+            title="Случайный факт...",
+            description=update_template,
+            thumb_url='https://i.imgur.com/gpiM7LN.png',
+            input_message_content=InputTextMessageContent(random_fact(),
+                                                          parse_mode=ParseMode.HTML),
+            reply_markup=InlineKeyboardMarkup(key_random_fact)
+        ),
+        InlineQueryResultArticle(
             id=get_inline_id('random_gay'),
             title="Гей дня это...",
             description=update_template_rnd,
@@ -279,6 +296,18 @@ def inlinequery(update: Update, _: CallbackContext):
     except Exception as e:
         logger.error('Failed to update.inline_query.answer: ' + str(e))
         logger.info('\n')
+
+
+def random_fact():
+    try:
+        url = 'https://randstuff.ru/fact/'
+        html = requests.get(url, verify=False, timeout=2)
+        soup = bs4.BeautifulSoup(html.text, 'lxml')
+        fact = soup.find_all('td')
+        return fact[0].text
+    except Exception as e:
+        logger.error('Failed to random_fact: ' + str(e))
+        return error_template
 
 
 def get_exchange_rates():
