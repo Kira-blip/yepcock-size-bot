@@ -249,6 +249,22 @@ def inlinequery(update: Update, _: CallbackContext):
             reply_markup=InlineKeyboardMarkup(key_get_my_IQ_result)
         ),
         InlineQueryResultArticle(
+            id=get_inline_id('fact_of_the_day'),
+            title="Факт дня...",
+            description=update_template,
+            thumb_url='https://i.imgur.com/gpiM7LN.png',
+            input_message_content=InputTextMessageContent(fact_of_the_day(),
+                                                          parse_mode=ParseMode.HTML)
+        ),
+        InlineQueryResultArticle(
+            id=get_inline_id('quote_of_the_day'),
+            title="Цитата дня...",
+            description=update_template,
+            thumb_url='https://i.imgur.com/gpiM7LN.png',
+            input_message_content=InputTextMessageContent(quote_of_the_day(),
+                                                          parse_mode=ParseMode.HTML)
+        ),
+        InlineQueryResultArticle(
             id=get_inline_id('random_fact'),
             title="Случайный факт...",
             description="Узнать случайный факт",
@@ -308,6 +324,44 @@ def random_fact():
         return fact[0].text
     except Exception as e:
         logger.error('Failed to random_fact: ' + str(e))
+        return error_template
+
+
+def fact_of_the_day():
+    try:
+        old_fact_of_the_day = dbRANDOM.search(Query().old_fact_of_the_day.exists())
+        if not old_fact_of_the_day:
+            logger.info('fact_of_the_day: old_fact_of_the_day not found, get new...')
+            url = 'https://randstuff.ru/fact/fav/'
+            html = requests.get(url, timeout=2)
+            soup = bs4.BeautifulSoup(html.text, 'lxml')
+            fact = soup.find_all('td')
+            dbRANDOM.insert({'old_fact_of_the_day': str(fact[0].text)})
+            return fact[0].text
+        else:
+            logger.info('fact_of_the_day: old_fact_of_the_day found')
+            return old_fact_of_the_day[0]['old_fact_of_the_day']
+    except Exception as e:
+        logger.error('Failed to fact_of_the_day: ' + str(e))
+        return error_template
+
+
+def quote_of_the_day():
+    try:
+        old_quote_of_the_day = dbRANDOM.search(Query().old_quote_of_the_day.exists())
+        if not old_quote_of_the_day:
+            logger.info('quote_of_the_day: old_quote_of_the_day not found, get new...')
+            url = 'https://randstuff.ru/saying/fav/'
+            html = requests.get(url, timeout=2)
+            soup = bs4.BeautifulSoup(html.text, 'lxml')
+            fact = soup.find_all('td')
+            dbRANDOM.insert({'old_quote_of_the_day': str(fact[0].text)})
+            return fact[0].text
+        else:
+            logger.info('old_quote_of_the_day: old_quote_of_the_day found')
+            return old_quote_of_the_day[0]['old_quote_of_the_day']
+    except Exception as e:
+        logger.error('Failed to quote_of_the_day: ' + str(e))
         return error_template
 
 
