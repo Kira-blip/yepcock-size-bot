@@ -106,7 +106,8 @@ def sizer_cock(userId):
 
 def homo_sexual(userId):
     percent = sync_with_db(userId, "homo_sexual", randrange(101))
-    text = " Я на <b>%s</b>" % percent + "<b>%</b>" + " гомосексуал (LGBT) 🏳️‍🌈"
+    type = sync_with_db(userId, "homo_type", random.choice(["актив", "пассив"]))
+    text = " Я на <b>%s</b>" % percent + "<b>%</b>" + " гомосексуал, " + type + " (LGBT) 🏳️‍🌈"
     return text
 
 
@@ -176,7 +177,7 @@ def iq_test(userId):
 
 
 key_get_my_cock_result = [
-    [InlineKeyboardButton('Узнать свой размер 👉👈', switch_inline_query_current_chat='')],
+    [InlineKeyboardButton('Узнай свой размер 👉👈', switch_inline_query_current_chat='')],
 ]
 
 key_get_my_IQ_result = [
@@ -184,7 +185,7 @@ key_get_my_IQ_result = [
 ]
 
 key_get_my_gay_result = [
-    [InlineKeyboardButton('Узнать свои шансы 🏳️‍🌈', switch_inline_query_current_chat='')],
+    [InlineKeyboardButton('Узнай свои шансы 🏳️‍🌈', switch_inline_query_current_chat='')],
 ]
 
 
