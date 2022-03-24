@@ -253,7 +253,7 @@ def inlinequery(update: Update, _: CallbackContext):
             title="Факт дня...",
             description=update_template,
             thumb_url='https://i.imgur.com/gpiM7LN.png',
-            input_message_content=InputTextMessageContent(fact_of_the_day(),
+            input_message_content=InputTextMessageContent('Факт дня:\n' + fact_of_the_day(),
                                                           parse_mode=ParseMode.HTML)
         ),
         InlineQueryResultArticle(
@@ -261,7 +261,7 @@ def inlinequery(update: Update, _: CallbackContext):
             title="Цитата дня...",
             description=update_template,
             thumb_url='https://i.imgur.com/gpiM7LN.png',
-            input_message_content=InputTextMessageContent(quote_of_the_day(),
+            input_message_content=InputTextMessageContent('Цитата дня:\n' + quote_of_the_day(),
                                                           parse_mode=ParseMode.HTML)
         ),
         InlineQueryResultArticle(
