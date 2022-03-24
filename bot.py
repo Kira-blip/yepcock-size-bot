@@ -302,7 +302,7 @@ def inlinequery(update: Update, _: CallbackContext):
 def random_fact():
     try:
         url = 'https://randstuff.ru/fact/'
-        html = requests.get(url, verify=False, timeout=2)
+        html = requests.get(url, timeout=2)
         soup = bs4.BeautifulSoup(html.text, 'lxml')
         fact = soup.find_all('td')
         return fact[0].text
