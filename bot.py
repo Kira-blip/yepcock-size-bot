@@ -193,7 +193,7 @@ key_get_my_gay_result = [
 ]
 
 key_random_fact = [
-    [InlineKeyboardButton('Узнать ещё 🤔', switch_inline_query_current_chat='')],
+    [InlineKeyboardButton('Узнать случайный факт 🤔', switch_inline_query_current_chat='')],
 ]
 
 
